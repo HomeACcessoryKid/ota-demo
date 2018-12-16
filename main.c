@@ -184,8 +184,13 @@ void ota_task(void *arg) {
         return;
     }
 
-    printf("\nWelcome to the system parameter editor!  Enter 'help' for more information.\n");
-    printf("In 30 seconds will reset the version to 0.0.0 and reboot to OTA\nPress enter for 5 new minutes\n\n");
+    printf(
+    "\nOTA-demo code version %s\n"
+    "Based on the eps-open-rtos system parameter editor\n"
+    "In 30 seconds will reset the version to 0.0.0 and reboot to OTA\n"
+    "Press enter for 5 new minutes\n"
+    "Enter 'help' for more information.\n\n"
+    , VERSION);
     status = sysparam_get_info(&base_addr, &num_sectors);
     if (status == SYSPARAM_OK) {
         printf("[current sysparam region is at 0x%08x (%d sectors)]\n", base_addr, num_sectors);
