@@ -20,7 +20,7 @@
 
 #define CMD_BUF_SIZE 5000
 
-int  inactive=0;
+int  timeleft=30; //30 seconds timeout
 const int status_base = -6;
 const char *status_messages[] = {
     "SYSPARAM_ERR_NOMEM",
@@ -185,7 +185,7 @@ void ota_task(void *arg) {
     }
 
     printf("\nWelcome to the system parameter editor!  Enter 'help' for more information.\n");
-    printf("In 30 seconds will reset the version to 0.0.0 and reboot to OTA\nPress enter for 30 new seconds\n\n");
+    printf("In 30 seconds will reset the version to 0.0.0 and reboot to OTA\nPress enter for 5 new minutes\n\n");
     status = sysparam_get_info(&base_addr, &num_sectors);
     if (status == SYSPARAM_OK) {
         printf("[current sysparam region is at 0x%08x (%d sectors)]\n", base_addr, num_sectors);
@@ -201,7 +201,7 @@ void ota_task(void *arg) {
         printf("==> ");
         fflush(stdout);
         len = tty_readline(cmd_buffer, CMD_BUF_SIZE, echo);
-        inactive=0;
+        timeleft=300; //5 minutes after input
         status = 0;
         if (!len) continue;
         if (cmd_buffer[len - 1] == '?') {
@@ -272,10 +272,9 @@ void ota_task(void *arg) {
 }    
 
 void timeout_task(void *arg) {
-
     while(1) {
-        if (inactive ==25) printf("In 5 seconds will reset the version to 0.0.0 and reboot to OTA\nPress <enter> for 30 new seconds\n==> ");
-        if (inactive++>30) { // 30 second timeout
+        if (timeleft ==10) printf("In 10 seconds will reset the version to 0.0.0 and reboot to OTA\nPress <enter> for 5 new minutes\n==> ");
+        if (timeleft--==0) { //timed out
             dump_params();
 
             //sysparam_set_string("ota_repo", "HomeACcessoryKid/ota-demo");
@@ -285,8 +284,8 @@ void timeout_task(void *arg) {
             printf("\n^^^ initial -> changed to vvvv\n\n");
             dump_params();
         
-            // these two lines are the ONLY thing needed for a repo to support ota after having started with ota-boot
             // in ota-boot the user gets to set the wifi and the repository details and it then installs the ota-main binary
+            // the below two lines are the ONLY thing needed for a repo to support ota after having started with ota-boot
             rboot_set_temp_rom(1); //select the OTA main routine
             sdk_system_restart();  //#include <rboot-api.h>
             // there is a bug in the esp SDK such that if you do not power cycle the chip after flashing, restart is unreliable
