@@ -42,7 +42,8 @@ void usage(void) {
         "  <key>?          -- Query the value of <key>\n"
         "  <key>=<value>   -- Set <key> to text <value>\n"
         "  <key>:<hexdata> -- Set <key> to binary value represented as hex\n"
-        "  led<+/-><pin#>  -- Define the gpio that has a LED connected, >15 to remove, +- if led activates with a 0 or a 1"
+        "  led<+/-><pin#>  -- Set gpio with a LED connected, >15 to remove\n"
+        "                      +- defines if LED activates with a 0 or a 1\n"
         "  dump            -- Show all currently set keys/values\n"
         "  compact         -- Compact the sysparam area\n"
         "  reformat        -- Reinitialize (clear) the sysparam area\n"
@@ -173,6 +174,7 @@ void ledset(int pin, int pol) {
     rboot_config conf;
     conf=rboot_get_config();
     conf.unused[1]=(pin>15)?0:(0x40+pol*0x10+(pin&0x0f));
+    printf("LEDinfo = rboot_config.unused[1] set to 0x%02x\n",conf.unused[1]);
     rboot_set_config(&conf);
 }
 
