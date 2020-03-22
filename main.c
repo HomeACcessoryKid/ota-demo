@@ -42,11 +42,12 @@ void usage(void) {
         "  <key>?          -- Query the value of <key>\n"
         "  <key>=<value>   -- Set <key> to text <value>\n"
         "  <key>:<hexdata> -- Set <key> to binary value represented as hex\n"
+        "  led<+/-><pin#>  -- Define the gpio that has a LED connected, >15 to remove, +- if led activates with a 0 or a 1"
         "  dump            -- Show all currently set keys/values\n"
         "  compact         -- Compact the sysparam area\n"
         "  reformat        -- Reinitialize (clear) the sysparam area\n"
-        "  echo-off        -- Disable input echo\n"
-        "  echo-on         -- Enable input echo\n"
+        "  echo_off        -- Disable input echo\n"
+        "  echo_on         -- Enable input echo\n"
         "  help            -- Show this help screen\n"
         );
 }
@@ -168,6 +169,13 @@ uint8_t *parse_hexdata(char *string, size_t *result_length) {
     return buf;
 }
 
+void ledset(int pin, int pol) {
+    rboot_config conf;
+    conf=rboot_get_config();
+    conf.unused[1]=(pin>15)?0:(0x40+pol*0x10+(pin&0x0f));
+    rboot_set_config(&conf);
+}
+
 void ota_task(void *arg) {
     char *cmd_buffer = malloc(CMD_BUF_SIZE);
     sysparam_status_t status;
@@ -238,6 +246,12 @@ void ota_task(void *arg) {
             } else {
                 printf("Error: Unable to parse hex data\n");
             }
+        } else if ((value = strchr(cmd_buffer, '+'))) {
+            *value++ = 0;
+            ledset(atoi(value),0);
+        } else if ((value = strchr(cmd_buffer, '-'))) {
+            *value++ = 0;
+            ledset(atoi(value),1);
         } else if (!strcmp(cmd_buffer, "dump")) {
             printf("Dumping all params:\n");
             status = dump_params();
@@ -252,10 +266,10 @@ void ota_task(void *arg) {
                 // using.
                 status = sysparam_init(base_addr, 0);
             }
-        } else if (!strcmp(cmd_buffer, "echo-on")) {
+        } else if (!strcmp(cmd_buffer, "echo_on")) {
             echo = true;
             printf("Echo on\n");
-        } else if (!strcmp(cmd_buffer, "echo-off")) {
+        } else if (!strcmp(cmd_buffer, "echo_off")) {
             echo = false;
             printf("Echo off\n");
         } else if (!strcmp(cmd_buffer, "otareboot")) {
